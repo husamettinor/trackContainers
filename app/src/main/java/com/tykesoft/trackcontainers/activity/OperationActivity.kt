@@ -1,16 +1,16 @@
 package com.tykesoft.trackcontainers.activity
 
+import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import com.google.android.gms.maps.*
 
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.database.*
+import com.google.maps.android.ui.IconGenerator
 import com.tykesoft.trackcontainers.R
 
 class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -53,6 +53,8 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(41.01, 28.97), 5f))
     }
 
     private fun loadContainers(dataSnapshot: DataSnapshot) {
@@ -70,9 +72,17 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
         val temperature = container["temperature"]
         val rate = container["rate"]
         val position = LatLng(lat, long)
+
+        val iconGenerator = IconGenerator(this)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            iconGenerator.setBackground(getDrawable(R.drawable.container))
+            iconGenerator.setContentPadding(55, 70, 0, 0)
+        }
+        iconGenerator.setTextAppearance(R.style.mapMarkerLabelText)
+
         mMap.addMarker(MarkerOptions()
                 .position(position)
                 .title("$temperature")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.container)))
+                .icon(BitmapDescriptorFactory.fromBitmap(iconGenerator.makeIcon("$rate%"))))
     }
 }
