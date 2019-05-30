@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Track Containers</string>
+    <string name="title_activity_operation">Track Containers</string>
+    <string name="email">E-mail</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+</resources>

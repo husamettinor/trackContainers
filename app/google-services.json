@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "81604880955",
+    "firebase_url": "https://track-containers-1559208008799.firebaseio.com",
+    "project_id": "track-containers-1559208008799",
+    "storage_bucket": "track-containers-1559208008799.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:81604880955:android:4855c6ac78706129",
+        "android_client_info": {
+          "package_name": "com.tykesoft.trackcontainers"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "81604880955-pn0sgcrqpa9obj16pb20qroq3a2hd0uf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tykesoft.trackcontainers",
+            "certificate_hash": "c308d18bc8d5d0efd6250c30f13997d8567fbe69"
+          }
+        },
+        {
+          "client_id": "81604880955-g7o0j4avhsafjnjl8oco2btvkoovau22.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCy2onU103lDMZGEwD0paWeBDZAZ4Nt_pk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "81604880955-g7o0j4avhsafjnjl8oco2btvkoovau22.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
