@@ -14,7 +14,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.libraries.places.api.Places
 import com.google.firebase.database.*
 import com.google.maps.android.ui.IconGenerator
 import com.tykesoft.trackcontainers.R
@@ -41,7 +40,6 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
         mRef = FirebaseDatabase.getInstance().reference
 
-        Places.initialize(applicationContext, getString(R.string.google_maps_key))
         val containerListener = object : ValueEventListener {
             override fun onCancelled(databaseError: DatabaseError) {
                 Log.e("Database Error", databaseError.toString())
@@ -56,15 +54,6 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
         mRef.child("containers").addValueEventListener(containerListener)
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
