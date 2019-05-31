@@ -1,6 +1,8 @@
 package com.tykesoft.trackcontainers.activity
 
+import android.app.Activity
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -12,6 +14,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.libraries.places.api.Places
 import com.google.firebase.database.*
 import com.google.maps.android.ui.IconGenerator
 import com.tykesoft.trackcontainers.R
@@ -21,10 +24,13 @@ import kotlin.collections.HashMap
 
 class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
 
+    private val RELOCATE_REQUEST = 1
+
     private lateinit var mMap: GoogleMap
     private lateinit var mRef: DatabaseReference
 
-    private val containerMarkerMap: HashMap<Marker, Container> = HashMap()
+    private var mSelectedMarker: Marker? = null
+    private val containerMarkerMap: HashMap<String, Container> = HashMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +41,7 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
         mRef = FirebaseDatabase.getInstance().reference
 
+        Places.initialize(applicationContext, getString(R.string.google_maps_key))
         val containerListener = object : ValueEventListener {
             override fun onCancelled(databaseError: DatabaseError) {
                 Log.e("Database Error", databaseError.toString())
@@ -62,8 +69,9 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
 
         mMap.setOnMarkerClickListener {
-            val container = containerMarkerMap[it]
+            val container = containerMarkerMap[it.title]
 
+            mSelectedMarker = it
             val builder = AlertDialog.Builder(this)
             builder.setTitle(container?.containerId)
             builder.setMessage("${container?.sensorId}")
@@ -77,17 +85,20 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(41.01, 28.97), 5f))
     }
 
-    private val relocateButtonClick = { dialogInterface: DialogInterface, which: Int ->
-
+    private val relocateButtonClick = { _: DialogInterface, _: Int ->
+        val intent = Intent(this, RelocateActivity::class.java)
+        intent.putExtra("container", mSelectedMarker?.title)
+        startActivityForResult(intent, RELOCATE_REQUEST)
     }
 
-    private val okButtonClick = { dialogInterface: DialogInterface, which: Int ->
-
+    private val okButtonClick = { _: DialogInterface, _: Int ->
+        mSelectedMarker = null
     }
 
     private fun loadContainers(dataSnapshot: DataSnapshot) {
         val containers = dataSnapshot.children.iterator()
 
+        mMap.clear()
         while(containers.hasNext()) {
             val containerData = containers.next().value as HashMap<*, *>
             val container = Container(
@@ -113,10 +124,28 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val marker = mMap.addMarker(MarkerOptions()
                 .position(position)
-                .title("${container.temperature}")
+                .title("${container.containerId}")
                 .icon(BitmapDescriptorFactory.fromBitmap(iconGenerator.makeIcon("${container.rate}%"))))
 
-        containerMarkerMap[marker] = container
+        container.marker = marker
+        containerMarkerMap[marker.title] = container
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == RELOCATE_REQUEST) {
+            if (resultCode == Activity.RESULT_OK) {
+                mSelectedMarker = null
+                val newLocation = LatLng(data!!.getDoubleExtra("lat", -34.0),
+                        data.getDoubleExtra("long", 151.0))
+                val container = containerMarkerMap[data.getStringExtra("container")]
+                if(container != null) {
+                    addToMap(container)
+                    containerMarkerMap[data.getStringExtra("container")]?.lat = newLocation.latitude
+                    containerMarkerMap[data.getStringExtra("container")]?.long = newLocation.longitude
+                    mRef.child("/containers/${container.containerId}").setValue(container)
+                }
+            }
+        }
     }
 
 }
