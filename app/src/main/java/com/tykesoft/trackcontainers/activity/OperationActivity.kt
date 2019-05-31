@@ -63,7 +63,7 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
             mSelectedMarker = it
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Container: ${container?.containerId}")
-            builder.setMessage("Sensor ID: ${container?.sensorId}\nTemperature: ${container?.temperature}\nOccupancy Rate: ${container?.rate}")
+            builder.setMessage("Sensor ID: ${container?.sensorId}\nTemperature: ${container?.temperature}\nOccupancy Rate: ${container?.rate}%")
             builder.setPositiveButton("OK", DialogInterface.OnClickListener(okButtonClick))
             builder.setNegativeButton("Relocate", DialogInterface.OnClickListener(relocateButtonClick))
             builder.show()
