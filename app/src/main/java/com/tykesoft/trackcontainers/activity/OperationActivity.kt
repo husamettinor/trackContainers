@@ -1,22 +1,30 @@
 package com.tykesoft.trackcontainers.activity
 
+import android.content.DialogInterface
 import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AlertDialog
 import android.util.Log
 import com.google.android.gms.maps.*
 
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.database.*
 import com.google.maps.android.ui.IconGenerator
 import com.tykesoft.trackcontainers.R
+import com.tykesoft.trackcontainers.model.Container
+import kotlin.collections.HashMap
+
 
 class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private lateinit var mRef: DatabaseReference
+
+    private val containerMarkerMap: HashMap<Marker, Container> = HashMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,16 +33,15 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
         mRef = FirebaseDatabase.getInstance().reference
 
         val containerListener = object : ValueEventListener {
-            override fun onCancelled(databaseError: DatabaseError?) {
+            override fun onCancelled(databaseError: DatabaseError) {
                 Log.e("Database Error", databaseError.toString())
             }
 
-            override fun onDataChange(dataSnapshot: DataSnapshot?) {
-                loadContainers(dataSnapshot!!)
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                loadContainers(dataSnapshot)
             }
 
         }
@@ -54,24 +61,48 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
+        mMap.setOnMarkerClickListener {
+            val container = containerMarkerMap[it]
+
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle(container?.containerId)
+            builder.setMessage("${container?.sensorId}")
+            builder.setPositiveButton("OK", DialogInterface.OnClickListener(okButtonClick))
+            builder.setNegativeButton("Relocate", DialogInterface.OnClickListener(relocateButtonClick))
+            builder.show()
+
+            true
+        }
+
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(41.01, 28.97), 5f))
+    }
+
+    private val relocateButtonClick = { dialogInterface: DialogInterface, which: Int ->
+
+    }
+
+    private val okButtonClick = { dialogInterface: DialogInterface, which: Int ->
+
     }
 
     private fun loadContainers(dataSnapshot: DataSnapshot) {
         val containers = dataSnapshot.children.iterator()
 
         while(containers.hasNext()) {
-            val container = containers.next().value as HashMap<*, *>
+            val containerData = containers.next().value as HashMap<*, *>
+            val container = Container(
+                    containerData["containerId"].toString(),
+                    containerData["sensorId"].toString().toInt(),
+                    containerData["lat"].toString().toDouble(),
+                    containerData["long"].toString().toDouble(),
+                    containerData["temperature"].toString().toDouble(),
+                    containerData["rate"].toString().toInt())
             addToMap(container)
         }
     }
 
-    private fun addToMap(container: HashMap<*, *>) {
-        val lat = container["lat"].toString().toDouble()
-        val long = container["long"].toString().toDouble()
-        val temperature = container["temperature"]
-        val rate = container["rate"]
-        val position = LatLng(lat, long)
+    private fun addToMap(container: Container) {
+        val position = LatLng(container.lat!!, container.long!!)
 
         val iconGenerator = IconGenerator(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -80,9 +111,12 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         iconGenerator.setTextAppearance(R.style.mapMarkerLabelText)
 
-        mMap.addMarker(MarkerOptions()
+        val marker = mMap.addMarker(MarkerOptions()
                 .position(position)
-                .title("$temperature")
-                .icon(BitmapDescriptorFactory.fromBitmap(iconGenerator.makeIcon("$rate%"))))
+                .title("${container.temperature}")
+                .icon(BitmapDescriptorFactory.fromBitmap(iconGenerator.makeIcon("${container.rate}%"))))
+
+        containerMarkerMap[marker] = container
     }
+
 }
