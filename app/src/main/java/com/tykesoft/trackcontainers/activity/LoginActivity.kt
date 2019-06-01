@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import com.google.firebase.auth.FirebaseAuth
 import com.tykesoft.trackcontainers.R
 import kotlinx.android.synthetic.main.activity_login.*
@@ -37,6 +38,9 @@ class LoginActivity : AppCompatActivity() {
                 }
             }
         } else {
+            etEmail.visibility = View.GONE
+            etPassword.visibility = View.GONE
+            btnLogin.visibility = View.GONE
             showError("Check your internet connection", false)
         }
 

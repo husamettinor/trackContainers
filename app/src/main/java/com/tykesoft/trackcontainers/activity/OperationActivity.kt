@@ -3,33 +3,35 @@ package com.tykesoft.trackcontainers.activity
 import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
-import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.util.Log
 import com.google.android.gms.maps.*
+import com.google.android.gms.maps.model.*
 
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.database.*
 import com.google.maps.android.ui.IconGenerator
 import com.tykesoft.trackcontainers.R
 import com.tykesoft.trackcontainers.model.Container
+import java.lang.Math.abs
 import kotlin.collections.HashMap
 
 
 class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val RELOCATE_REQUEST = 1
+    private val DEFAULT_ZOOM = 8.0F
+    private val ZOOM_RESOLUTION = 1.2F
+    private val MAX_MARKERS_VISIBLE = 200
 
     private lateinit var mMap: GoogleMap
     private lateinit var mRef: DatabaseReference
 
     private var mSelectedMarker: Marker? = null
     private val containerMarkerMap: HashMap<String, Container> = HashMap()
+    private val mDefaultLocation = LatLng(39.925533, 32.866287)
+    private var mCurrentZoom = DEFAULT_ZOOM
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,8 +53,26 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
 
         }
 
+//        initDb()
         mRef.child("containers").addValueEventListener(containerListener)
     }
+
+//    private fun initDb() {
+//        val date = Date()
+//
+//        for(i in 1..1000) {
+//            val container = Container(
+//                    i.toString(),
+//                    (1..1000).random(),
+//                    ((0..1000).random().toDouble() / 1000) + 39.5,
+//                    ((0..1000).random().toDouble() / 1000) + 32.3,
+//                    (30..40).random().toDouble(),
+//                    (0..100).random(),
+//                    date.toString()
+//            )
+//            mRef.child("/containers/${container.containerId}").setValue(container)
+//        }
+//    }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -63,7 +83,7 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
             mSelectedMarker = it
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Container: ${container?.containerId}")
-            builder.setMessage("Sensor ID: ${container?.sensorId}\nTemperature: ${container?.temperature}\nOccupancy Rate: ${container?.rate}%")
+            builder.setMessage("Sensor ID: ${container?.sensorId}\nTemperature: ${container?.temperature}\nOccupancy Rate: ${container?.rate}%\nLast Read Date: ${container?.date}")
             builder.setPositiveButton("OK", DialogInterface.OnClickListener(okButtonClick))
             builder.setNegativeButton("Relocate", DialogInterface.OnClickListener(relocateButtonClick))
             builder.show()
@@ -71,7 +91,15 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
             true
         }
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(41.01, 28.97), 5f))
+        mMap.setOnCameraMoveListener {
+            val change = abs(mMap.cameraPosition.zoom.toDouble() - mCurrentZoom)
+            if(change > ZOOM_RESOLUTION) {
+                mCurrentZoom = mMap.cameraPosition.zoom
+                loadMarkers()
+            }
+        }
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM))
     }
 
     private val relocateButtonClick = { _: DialogInterface, _: Int ->
@@ -87,7 +115,6 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun loadContainers(dataSnapshot: DataSnapshot) {
         val containers = dataSnapshot.children.iterator()
 
-        mMap.clear()
         while(containers.hasNext()) {
             val containerData = containers.next().value as HashMap<*, *>
             val container = Container(
@@ -96,8 +123,27 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
                     containerData["lat"].toString().toDouble(),
                     containerData["long"].toString().toDouble(),
                     containerData["temperature"].toString().toDouble(),
-                    containerData["rate"].toString().toInt())
-            addToMap(container)
+                    containerData["rate"].toString().toInt(),
+                    containerData["date"].toString())
+
+            containerMarkerMap[container.containerId!!] = container
+        }
+        loadMarkers()
+    }
+
+    private fun loadMarkers() {
+        mMap.clear()
+        val bounds = mMap.projection.visibleRegion.latLngBounds
+        var i = 0
+        for((_, container) in containerMarkerMap) {
+            if(i < MAX_MARKERS_VISIBLE) {
+                if (bounds.contains(LatLng(container.lat!!, container.long!!))) {
+                    addToMap(container)
+                }
+                i++
+            } else {
+                break
+            }
         }
     }
 
@@ -105,10 +151,6 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
         val position = LatLng(container.lat!!, container.long!!)
 
         val iconGenerator = IconGenerator(this)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            iconGenerator.setBackground(getDrawable(R.drawable.container))
-            iconGenerator.setContentPadding(55, 70, 0, 0)
-        }
         iconGenerator.setTextAppearance(R.style.mapMarkerLabelText)
 
         val marker = mMap.addMarker(MarkerOptions()
@@ -116,7 +158,6 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
                 .title("${container.containerId}")
                 .icon(BitmapDescriptorFactory.fromBitmap(iconGenerator.makeIcon("${container.rate}%"))))
 
-        container.marker = marker
         containerMarkerMap[marker.title] = container
     }
 

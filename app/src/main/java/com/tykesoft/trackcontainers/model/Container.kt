@@ -1,6 +1,6 @@
 package com.tykesoft.trackcontainers.model
 
-import com.google.android.gms.maps.model.Marker
+import java.util.*
 
 data class Container (
     var containerId: String? = null,
@@ -9,5 +9,5 @@ data class Container (
     var long: Double? = null,
     var temperature: Double? = null,
     var rate: Int? = null,
-    var marker: Marker? = null
+    var date: String? = null
 )

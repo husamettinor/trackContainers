@@ -31,7 +31,7 @@ class RelocateActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
 
     private var mLocationPermissionGranted = false
-    private val mDefaultLocation = LatLng(-33.8523341, 151.2106085)
+    private val mDefaultLocation = LatLng(39.925533, 32.866287)
     private var mCurrentLocation : LatLng? = null
     private var mMarker: Marker? = null
     private var selectedContainerId: String? = null
@@ -57,11 +57,6 @@ class RelocateActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        // Add a marker in Sydney and move the camera
-        val sydney = LatLng(-34.0, 151.0)
-        mMarker = mMap.addMarker(MarkerOptions().position(sydney))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
-
         mMap.setOnMapClickListener {
             mMarker?.remove()
             mMarker = mMap.addMarker(MarkerOptions().position(it))
@@ -78,6 +73,7 @@ class RelocateActivity : AppCompatActivity(), OnMapReadyCallback {
                 finish()
             } else {
                 setResult(Activity.RESULT_CANCELED)
+                finish()
             }
         }
 
@@ -117,7 +113,7 @@ class RelocateActivity : AppCompatActivity(), OnMapReadyCallback {
             if (mLocationPermissionGranted) {
                 val locationResult = mFusedLocationProviderClient.lastLocation
                 locationResult.addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
+                    if (task.isSuccessful && task.result != null) {
                         val newLocation = LatLng(task.result!!.latitude, task.result!!.longitude)
                         mCurrentLocation = newLocation
                         mMarker = mMap.addMarker(MarkerOptions().position(newLocation))
