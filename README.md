@@ -15,6 +15,7 @@ Users can display container information detail by simply clicking on marker. All
  User information is kept on Firebase Auth service. Users can login with account given below:
  
  E-mail: husamettinor@gmail.com
+ 
  Password: 123456
 
 ### Data Update
