@@ -103,6 +103,9 @@ class RelocateActivity : AppCompatActivity(), OnMapReadyCallback {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true
                     pickCurrentPlace()
+                } else {
+                    setResult(Activity.RESULT_CANCELED)
+                    finish()
                 }
             }
         }

@@ -15,15 +15,16 @@ import com.google.maps.android.ui.IconGenerator
 import com.tykesoft.trackcontainers.R
 import com.tykesoft.trackcontainers.model.Container
 import java.lang.Math.abs
+import java.util.*
 import kotlin.collections.HashMap
 
 
 class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private val RELOCATE_REQUEST = 1
-    private val DEFAULT_ZOOM = 8.0F
+    private val DEFAULT_ZOOM = 7.0F
     private val ZOOM_RESOLUTION = 1.2F
-    private val MAX_MARKERS_VISIBLE = 200
+    private val MAX_MARKERS_VISIBLE = 1000
 
     private lateinit var mMap: GoogleMap
     private lateinit var mRef: DatabaseReference
@@ -60,12 +61,12 @@ class OperationActivity : AppCompatActivity(), OnMapReadyCallback {
 //    private fun initDb() {
 //        val date = Date()
 //
-//        for(i in 1..1000) {
+//        for(i in 1..4000) {
 //            val container = Container(
 //                    i.toString(),
-//                    (1..1000).random(),
-//                    ((0..1000).random().toDouble() / 1000) + 39.5,
-//                    ((0..1000).random().toDouble() / 1000) + 32.3,
+//                    (1..4000).random(),
+//                    ((0..5000).random().toDouble() / 1000) + 36.5,
+//                    ((0..17000).random().toDouble() / 1000) + 27,
 //                    (30..40).random().toDouble(),
 //                    (0..100).random(),
 //                    date.toString()
